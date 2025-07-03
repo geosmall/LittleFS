@@ -2,10 +2,19 @@
 
 #include <LittleFS.h>
 
+#if defined(ARDUINO_BLACKPILL_F411CE)
+//              MOSI  MISO  SCLK
+SPIClass SPIbus(PA7,  PA6,  PA5);
+#define CS_PIN PA4
+#else
+//              MOSI  MISO  SCLK
+SPIClass SPIbus(PC12, PC11, PC10);
+#define CS_PIN PD2
+#endif
 
 // Flash chip on Teensy Audio Shield or Prop Shield
 LittleFS_SPIFlash myfs;
-const int chipSelect = 6;
+// const int chipSelect = 6;
 
 
 void setup() {
@@ -14,13 +23,13 @@ void setup() {
   //SPI.setSCK(14);  // Audio shield has SCK on pin 14  
   
   // Open serial communications and wait for port to open:
-  Serial.begin(9600);
+  Serial.begin(115200);
   while (!Serial) { ; // wait for Arduino Serial Monitor
   }
 
   Serial.println("Initializing Flash Chip");
 
-  if (!myfs.begin(chipSelect)) {
+  if (!myfs.begin(CS_PIN, SPIbus)) {
     Serial.println("initialization failed!");
     return;
   }
