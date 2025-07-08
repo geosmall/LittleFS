@@ -23,8 +23,8 @@
 #include <Arduino.h>
 #include <LittleFS.h>
 
-#define SPICONFIG   SPISettings(30000000, MSBFIRST, SPI_MODE0)
-
+// #define SPICONFIG   SPISettings(30000000, MSBFIRST, SPI_MODE0)
+#define SPICONFIG SPISettings(1000000, MSBFIRST, SPI_MODE0)
 
 
 PROGMEM static const struct chipinfo {
@@ -95,11 +95,11 @@ bool LittleFS_SPIFlash::begin(uint8_t cspin, SPIClass &spiport)
     digitalWrite(pin, HIGH);
     port->endTransaction();
 
-    //Serial.printf("Flash ID: %02X %02X %02X  %02X\n", buf[1], buf[2], buf[3], buf[4]);
+    Serial.printf("Flash ID: %02X %02X %02X  %02X\n", buf[1], buf[2], buf[3], buf[4]);
     const struct chipinfo *info = chip_lookup(buf + 1);
     if (!info) return false;
     hwinfo = info;
-    //Serial.printf("Flash size is %.2f Mbyte\n", (float)info->chipsize / 1048576.0f);
+    Serial.printf("Flash size is %.2f Mbyte\n", (float)info->chipsize / 1048576.0f);
 
     memset(&lfs, 0, sizeof(lfs));
     memset(&config, 0, sizeof(config));
@@ -119,23 +119,23 @@ bool LittleFS_SPIFlash::begin(uint8_t cspin, SPIClass &spiport)
     config.name_max = LFS_NAME_MAX;
     configured = true;
 
-    //Serial.println("attempting to mount existing media");
+    Serial.println("attempting to mount existing media");
     if (lfs_mount(&lfs, &config) < 0) {
-        //Serial.println("couldn't mount media, attemping to format");
+        Serial.println("couldn't mount media, attemping to format");
         if (lfs_format(&lfs, &config) < 0) {
-            //Serial.println("format failed :(");
+            Serial.println("format failed :(");
             port = nullptr;
             return false;
         }
-        //Serial.println("attempting to mount freshly formatted media");
+        Serial.println("attempting to mount freshly formatted media");
         if (lfs_mount(&lfs, &config) < 0) {
-            //Serial.println("mount after format failed :(");
+            Serial.println("mount after format failed :(");
             port = nullptr;
             return false;
         }
     }
     mounted = true;
-    //Serial.println("success");
+    Serial.println("success");
     return true;
 }
 

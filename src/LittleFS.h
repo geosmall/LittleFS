@@ -22,10 +22,10 @@
 
 #pragma once
 #include <Arduino.h>
-#include <FS.h>
 #include <SPI.h>
+#include <FS.h>
 #include "littlefs/lfs.h"
-//#include <algorithm>
+#include "W25QXX.h"
 
 // ------------------------------------------------------------------------------------------------------
 
@@ -428,6 +428,7 @@ public:
     bool begin(uint8_t cspin, SPIClass &spiport = SPI);
     const char *getMediaName();
     const char *name() { return getMediaName(); }
+    W25QXX_dev_hdl_t W25QXX_hdl {};        /**< Empty W25QXX handle struct */
 private:
     int read(lfs_block_t block, lfs_off_t offset, void *buf, lfs_size_t size);
     int prog(lfs_block_t block, lfs_off_t offset, const void *buf, lfs_size_t size);
