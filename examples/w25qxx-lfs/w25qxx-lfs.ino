@@ -40,7 +40,7 @@ LittleFS_SPIFlash myfs;
 // the setup routine runs once when you press reset:
 void setup()
 {
-    W25QXX_err_t res;
+    bool res;
 
     Serial.begin(115200);
     while (!Serial) delay(100); // wait until Serial/monitor is opened
@@ -57,29 +57,30 @@ void setup()
 
     delay(10); // Wait a bit to make sure w25qxx chip is ready
 
-    if (!myfs.begin(CS_PIN, SPIbus)) {
+    res = myfs.begin(CS_PIN, SPIbus);
+    if (!res) {
         Serial.println("initialization failed!");
         Local_Error_Handler();
     }
 
     // W25QXX_info_t info = W25QXX_hdl.chip_info;
-    auto &info = myfs.W25QXX_hdl.chip_info;
+    // auto &info = myfs.W25QXX_hdl.chip_info;
 
-    if (res == W25QXX_Ok) {
-        DBG("W25QXX successfully initialized\n");
-        DBG("Manufacturer       = 0x%2x\n", info.manufacturer_id);
-        DBG("JEDEC Device       = 0x%4x\n", info.jedec_id);
-        DBG("Block size         = 0x%04lx (%lu)\n", info.block_size, info.block_size);
-        DBG("Block count        = 0x%04lx (%lu)\n", info.block_count, info.block_count);
-        DBG("Sector size        = 0x%04lx (%lu)\n", info.sector_size, info.sector_size);
-        DBG("Sectors per block  = 0x%04lx (%lu)\n", info.sectors_in_block, info.sectors_in_block);
-        DBG("Page size          = 0x%04lx (%lu)\n", info.page_size, info.page_size);
-        DBG("Pages per sector   = 0x%04lx (%lu)\n", info.pages_in_sector, info.pages_in_sector);
-        DBG("Total size (in kB) = 0x%04lx (%lu)\n", (info.block_count * info.block_size) / 1024, (info.block_count * info.block_size) / 1024);
-    } else {
-        DBG("Unable to initialize w25qxx\n");
-        Error_Handler();
-    }
+    // if (res == W25QXX_Ok) {
+    //     DBG("W25QXX successfully initialized\n");
+    //     DBG("Manufacturer       = 0x%2x\n", info.manufacturer_id);
+    //     DBG("JEDEC Device       = 0x%4x\n", info.jedec_id);
+    //     DBG("Block size         = 0x%04lx (%lu)\n", info.block_size, info.block_size);
+    //     DBG("Block count        = 0x%04lx (%lu)\n", info.block_count, info.block_count);
+    //     DBG("Sector size        = 0x%04lx (%lu)\n", info.sector_size, info.sector_size);
+    //     DBG("Sectors per block  = 0x%04lx (%lu)\n", info.sectors_in_block, info.sectors_in_block);
+    //     DBG("Page size          = 0x%04lx (%lu)\n", info.page_size, info.page_size);
+    //     DBG("Pages per sector   = 0x%04lx (%lu)\n", info.pages_in_sector, info.pages_in_sector);
+    //     DBG("Total size (in kB) = 0x%04lx (%lu)\n", (info.block_count * info.block_size) / 1024, (info.block_count * info.block_size) / 1024);
+    // } else {
+    //     DBG("Unable to initialize w25qxx\n");
+    //     Error_Handler();
+    // }
 
     DBG("\n");
 

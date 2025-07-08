@@ -25,7 +25,6 @@
 #include <SPI.h>
 #include <FS.h>
 #include "littlefs/lfs.h"
-#include "W25QXX.h"
 
 // ------------------------------------------------------------------------------------------------------
 
@@ -37,29 +36,6 @@ public:
     static unsigned long get(void) __attribute__((always_inline)) { HAL_GetTick() / 1000; }
 };
 extern teensy3_clock_class Teensy3Clock;
-
-class elapsedMicros
-{
-private:
-    unsigned long us;
-public:
-    elapsedMicros(void) { us = micros(); }
-    elapsedMicros(unsigned long val) { us = micros() - val; }
-    elapsedMicros(const elapsedMicros &orig) { us = orig.us; }
-    operator unsigned long () const { return micros() - us; }
-    elapsedMicros & operator = (const elapsedMicros &rhs) { us = rhs.us; return *this; }
-    elapsedMicros & operator = (unsigned long val) { us = micros() - val; return *this; }
-    elapsedMicros & operator -= (unsigned long val)      { us += val ; return *this; }
-    elapsedMicros & operator += (unsigned long val)      { us -= val ; return *this; }
-    elapsedMicros operator - (int val) const           { elapsedMicros r(*this); r.us += val; return r; }
-    elapsedMicros operator - (unsigned int val) const  { elapsedMicros r(*this); r.us += val; return r; }
-    elapsedMicros operator - (long val) const          { elapsedMicros r(*this); r.us += val; return r; }
-    elapsedMicros operator - (unsigned long val) const { elapsedMicros r(*this); r.us += val; return r; }
-    elapsedMicros operator + (int val) const           { elapsedMicros r(*this); r.us -= val; return r; }
-    elapsedMicros operator + (unsigned int val) const  { elapsedMicros r(*this); r.us -= val; return r; }
-    elapsedMicros operator + (long val) const          { elapsedMicros r(*this); r.us -= val; return r; }
-    elapsedMicros operator + (unsigned long val) const { elapsedMicros r(*this); r.us -= val; return r; }
-};
 
 // ------------------------------------------------------------------------------------------------------
 
@@ -428,7 +404,6 @@ public:
     bool begin(uint8_t cspin, SPIClass &spiport = SPI);
     const char *getMediaName();
     const char *name() { return getMediaName(); }
-    W25QXX_dev_hdl_t W25QXX_hdl {};        /**< Empty W25QXX handle struct */
 private:
     int read(lfs_block_t block, lfs_off_t offset, void *buf, lfs_size_t size);
     int prog(lfs_block_t block, lfs_off_t offset, const void *buf, lfs_size_t size);
@@ -458,55 +433,4 @@ private:
     SPIClass *port = nullptr;
     uint8_t pin = 0;
     const void *hwinfo = nullptr;
-};
-
-//----------------------------------------------------------------------------
-// Simple SPI wrapper that allows you to specify an IO pin and the
-// begin method will try the known types of SPI LittleFS file systems
-// begin methods until it finds one that return true.
-// you can then query which one using the fs() method.
-//----------------------------------------------------------------------------
-// This FS simply errors out all calls...
-class FS_NONE : public FS
-{
-    virtual File open(const char *filename, uint8_t mode = FILE_READ) { return File();}
-    virtual bool exists(const char *filepath) {return false;}
-    virtual bool mkdir(const char *filepath)  {return false;}
-    virtual bool rename(const char *oldfilepath, const char *newfilepath) { return false;}
-    virtual bool remove(const char *filepath) { return false;}
-    virtual bool rmdir(const char *filepath) { return false;}
-    virtual uint64_t usedSize()  { return 0;}
-    virtual uint64_t totalSize() { return 0;}
-};
-
-class LittleFS_SPI : public FS
-{
-public:
-    constexpr LittleFS_SPI(uint8_t pin = 0xff) : csPin_(pin) {}
-    bool begin(uint8_t cspin = 0xff, SPIClass &spiport = SPI);
-    inline LittleFS *fs() { return (pfs == &fsnone) ? nullptr : (LittleFS *)pfs ;}
-    inline const char *displayName() {return display_name;}
-    inline const char *getMediaName() {return (pfs == &fsnone) ? (const char *)F("") : ((LittleFS *)pfs)->getMediaName();}
-    const char *name() { return getMediaName(); }
-
-    // You have full access to internals.
-    uint8_t csPin_ = 0xFF;
-    LittleFS_SPIFlash flash;
-    FS_NONE fsnone;
-
-    // FS overrides
-    virtual File open(const char *filename, uint8_t mode = FILE_READ) { return pfs->open(filename, mode); }
-    virtual bool exists(const char *filepath) { return pfs->exists(filepath); }
-    virtual bool mkdir(const char *filepath)  { return pfs->mkdir(filepath); }
-    virtual bool rename(const char *oldfilepath, const char *newfilepath) { return pfs->rename(oldfilepath, newfilepath); }
-    virtual bool remove(const char *filepath)  { return pfs->remove(filepath); }
-    virtual bool rmdir(const char *filepath)  { return pfs->rmdir(filepath); }
-    virtual uint64_t usedSize()  { return pfs->usedSize(); }
-    virtual uint64_t totalSize() { return pfs->totalSize(); }
-    virtual bool format(int type = 0, char progressChar = 0, Print &pr = Serial) { return pfs->format(type, progressChar, pr); }
-
-private:
-    FS *pfs = &fsnone;
-    char display_name[10] = {};
-
 };

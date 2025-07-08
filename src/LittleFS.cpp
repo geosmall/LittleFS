@@ -377,7 +377,7 @@ int LittleFS_SPIFlash::erase(lfs_block_t block)
 
 int LittleFS_SPIFlash::wait(uint32_t microseconds)
 {
-    elapsedMicros usec = 0;
+    uint32_t start = micros();
     while (1) {
         port->beginTransaction(SPICONFIG);
         digitalWrite(pin, LOW);
@@ -385,25 +385,9 @@ int LittleFS_SPIFlash::wait(uint32_t microseconds)
         digitalWrite(pin, HIGH);
         port->endTransaction();
         if (!(status & 1)) break;
-        if (usec > microseconds) return LFS_ERR_IO; // timeout
+        if ((micros() - start) > microseconds) return LFS_ERR_IO; // timeout
         yield();
     }
     //Serial.printf("  waited %u us\n", (unsigned int)usec);
     return 0; // success
-}
-
-//-----------------------------------------------------------------------------
-// Wrapper classes begin methods
-//-----------------------------------------------------------------------------
-bool LittleFS_SPI::begin(uint8_t cspin, SPIClass &spiport)
-{
-    if (cspin != 0xff) csPin_ = cspin;
-    if (flash.begin(csPin_, spiport)) {
-        sprintf(display_name, (const char *)F("Flash_%u"), csPin_);
-        pfs = &flash;
-        return true;
-    }
-    // none of the above.
-    pfs = &fsnone;
-    return false;
 }
