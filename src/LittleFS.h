@@ -28,7 +28,17 @@
 
 // ------------------------------------------------------------------------------------------------------
 
-#define FLASHMEM PROGMEM
+// Structure definition for device info
+typedef struct LFS_W25QXX_info_s {
+    uint8_t  manufacturer_id;
+    uint16_t jedec_id;
+    uint32_t block_size;
+    uint32_t block_count;
+    uint32_t sector_size;
+    uint32_t sectors_in_block;
+    uint32_t page_size;
+    uint32_t pages_in_sector;
+} LFS_W25QXX_info_t;
 
 class teensy3_clock_class
 {
@@ -404,6 +414,7 @@ public:
     bool begin(uint8_t cspin, SPIClass &spiport = SPI);
     const char *getMediaName();
     const char *name() { return getMediaName(); }
+    bool getChipInfo(LFS_W25QXX_info_t &info);
 private:
     int read(lfs_block_t block, lfs_off_t offset, void *buf, lfs_size_t size);
     int prog(lfs_block_t block, lfs_off_t offset, const void *buf, lfs_size_t size);

@@ -1,5 +1,4 @@
 #include <SPI.h>
-#include "W25QXX.h"
 #include "LittleFS.h"
 
 // w25qxx_interface_t interface = W25QXX_INTERFACE_SPI;
@@ -63,24 +62,23 @@ void setup()
         Local_Error_Handler();
     }
 
-    // W25QXX_info_t info = W25QXX_hdl.chip_info;
-    // auto &info = myfs.W25QXX_hdl.chip_info;
-
-    // if (res == W25QXX_Ok) {
-    //     DBG("W25QXX successfully initialized\n");
-    //     DBG("Manufacturer       = 0x%2x\n", info.manufacturer_id);
-    //     DBG("JEDEC Device       = 0x%4x\n", info.jedec_id);
-    //     DBG("Block size         = 0x%04lx (%lu)\n", info.block_size, info.block_size);
-    //     DBG("Block count        = 0x%04lx (%lu)\n", info.block_count, info.block_count);
-    //     DBG("Sector size        = 0x%04lx (%lu)\n", info.sector_size, info.sector_size);
-    //     DBG("Sectors per block  = 0x%04lx (%lu)\n", info.sectors_in_block, info.sectors_in_block);
-    //     DBG("Page size          = 0x%04lx (%lu)\n", info.page_size, info.page_size);
-    //     DBG("Pages per sector   = 0x%04lx (%lu)\n", info.pages_in_sector, info.pages_in_sector);
-    //     DBG("Total size (in kB) = 0x%04lx (%lu)\n", (info.block_count * info.block_size) / 1024, (info.block_count * info.block_size) / 1024);
-    // } else {
-    //     DBG("Unable to initialize w25qxx\n");
-    //     Error_Handler();
-    // }
+    // Get and display chip information
+    LFS_W25QXX_info_t info;
+    if (myfs.getChipInfo(info)) {
+        DBG("W25QXX successfully initialized\n");
+        DBG("Manufacturer       = 0x%02x\n", info.manufacturer_id);
+        DBG("JEDEC Device       = 0x%04x\n", info.jedec_id);
+        DBG("Block size         = 0x%04lx (%lu)\n", info.block_size, info.block_size);
+        DBG("Block count        = 0x%04lx (%lu)\n", info.block_count, info.block_count);
+        DBG("Sector size        = 0x%04lx (%lu)\n", info.sector_size, info.sector_size);
+        DBG("Sectors per block  = 0x%04lx (%lu)\n", info.sectors_in_block, info.sectors_in_block);
+        DBG("Page size          = 0x%04lx (%lu)\n", info.page_size, info.page_size);
+        DBG("Pages per sector   = 0x%04lx (%lu)\n", info.pages_in_sector, info.pages_in_sector);
+        DBG("Total size (in kB) = 0x%04lx (%lu)\n", (info.block_count * info.block_size) / 1024, (info.block_count * info.block_size) / 1024);
+    } else {
+        DBG("Unable to retrieve chip information\n");
+        Local_Error_Handler();
+    }
 
     DBG("\n");
 

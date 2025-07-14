@@ -27,7 +27,7 @@
 #define SPICONFIG SPISettings(1000000, MSBFIRST, SPI_MODE0)
 
 
-PROGMEM static const struct chipinfo {
+static const struct chipinfo {
     uint8_t id[3];
     uint8_t addrbits;   // number of address bits, 24 or 32
     uint16_t progsize;  // page size for programming, in bytes
@@ -76,7 +76,6 @@ static const struct chipinfo *chip_lookup(const uint8_t *id)
     return nullptr;
 }
 
-FLASHMEM
 bool LittleFS_SPIFlash::begin(uint8_t cspin, SPIClass &spiport)
 {
     pin = cspin;
@@ -139,14 +138,37 @@ bool LittleFS_SPIFlash::begin(uint8_t cspin, SPIClass &spiport)
     return true;
 }
 
-FLASHMEM
 const char *LittleFS_SPIFlash::getMediaName()
 {
     if (!hwinfo) return nullptr;
     return ((const struct chipinfo *)hwinfo)->pn;
 }
 
-FLASHMEM
+bool LittleFS_SPIFlash::getChipInfo(LFS_W25QXX_info_t &info)
+{
+    if (!hwinfo || !configured) {
+        return false;
+    }
+
+    const struct chipinfo *chip = (const struct chipinfo *)hwinfo;
+
+    // Extract manufacturer ID and JEDEC ID from the chip info
+    info.manufacturer_id = chip->id[0];
+    info.jedec_id = (chip->id[1] << 8) | chip->id[2];
+
+    // Set block and sector information
+    info.block_size = chip->erasesize;  // This is actually the sector size in LittleFS
+    info.block_count = chip->chipsize / chip->erasesize;
+    info.sector_size = chip->erasesize;
+    info.sectors_in_block = 1;  // In this implementation, block = sector
+
+    // Set page information
+    info.page_size = chip->progsize;
+    info.pages_in_sector = chip->erasesize / chip->progsize;
+
+    return true;
+}
+
 bool LittleFS::quickFormat()
 {
     if (!configured) return false;
@@ -211,7 +233,6 @@ static int cb_usedBlocks(void *inData, lfs_block_t block)
     return 0;
 }
 
-FLASHMEM
 uint32_t LittleFS::formatUnused(uint32_t blockCnt, uint32_t blockStart)
 {
     if (!configured) return 0;
@@ -254,7 +275,6 @@ uint32_t LittleFS::formatUnused(uint32_t blockCnt, uint32_t blockStart)
     return block; // return lastChecked block to store to start next pass as blockStart
 }
 
-FLASHMEM
 bool LittleFS::lowLevelFormat(char progressChar, Print *pr)
 {
     if (!configured) return false;
