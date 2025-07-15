@@ -40,12 +40,12 @@ typedef struct LFS_W25QXX_info_s {
     uint32_t pages_in_sector;
 } LFS_W25QXX_info_t;
 
-class teensy3_clock_class
+class LittleFS_clock_class
 {
 public:
     static unsigned long get(void) __attribute__((always_inline)) { HAL_GetTick() / 1000; }
 };
-extern teensy3_clock_class Teensy3Clock;
+extern LittleFS_clock_class LittleFSClock;
 
 // ------------------------------------------------------------------------------------------------------
 
@@ -328,7 +328,7 @@ public:
             if (lfs_file_open(&lfs, file, filepath, LFS_O_RDWR | LFS_O_CREAT) >= 0) {
                 //attributes get written when the file is closed
                 uint32_t filetime = 0;
-                uint32_t _now = Teensy3Clock.get();
+                uint32_t _now = LittleFSClock.get();
                 rcode = lfs_getattr(&lfs, filepath, 'c', (void *)&filetime, sizeof(filetime));
                 if (rcode != sizeof(filetime)) {
                     rcode = lfs_setattr(&lfs, filepath, 'c', (const void *) &_now, sizeof(_now));
@@ -358,7 +358,7 @@ public:
         int rcode;
         if (!mounted) return false;
         if (lfs_mkdir(&lfs, filepath) < 0) return false;
-        uint32_t _now = Teensy3Clock.get();
+        uint32_t _now = LittleFSClock.get();
         rcode = lfs_setattr(&lfs, filepath, 'c', (const void *) &_now, sizeof(_now));
         if (rcode < 0)
             Serial.println("FD:: set attribute creation failed");
@@ -371,7 +371,7 @@ public:
     {
         if (!mounted) return false;
         if (lfs_rename(&lfs, oldfilepath, newfilepath) < 0) return false;
-        uint32_t _now = Teensy3Clock.get();
+        uint32_t _now = LittleFSClock.get();
         int rcode = lfs_setattr(&lfs, newfilepath, 'm', (const void *) &_now, sizeof(_now));
         if (rcode < 0)
             Serial.println("FD:: set attribute modified failed");
