@@ -43,7 +43,7 @@ typedef struct LFS_W25QXX_info_s {
 class LittleFS_clock_class
 {
 public:
-    static unsigned long get(void) __attribute__((always_inline)) { HAL_GetTick() / 1000; }
+    static unsigned long get(void) __attribute__((always_inline)) { return HAL_GetTick() / 1000; }
 };
 extern LittleFS_clock_class LittleFSClock;
 
@@ -58,6 +58,13 @@ private:
     // derived classes is meant to have a public constructor!
     LittleFSFile(lfs_t *lfsin, lfs_file_t *filein, const char *name)
     {
+        if (!lfsin || !filein || !name) {
+            lfs = nullptr;
+            file = nullptr;
+            dir = nullptr;
+            fullpath[0] = '\0';
+            return;
+        }
         lfs = lfsin;
         file = filein;
         dir = nullptr;
@@ -66,6 +73,13 @@ private:
     }
     LittleFSFile(lfs_t *lfsin, lfs_dir_t *dirin, const char *name)
     {
+        if (!lfsin || !dirin || !name) {
+            lfs = nullptr;
+            file = nullptr;
+            dir = nullptr;
+            fullpath[0] = '\0';
+            return;
+        }
         lfs = lfsin;
         dir = dirin;
         file = nullptr;
@@ -84,6 +98,7 @@ public:
 
     virtual bool getCreateTime(DateTimeFields &tm)
     {
+        if (!lfs) return false;
         uint32_t mdt = getCreationTime();
         if (mdt == 0) { return false;} // did not retrieve a date;
         breakTime(mdt, tm);
@@ -91,6 +106,7 @@ public:
     }
     virtual bool getModifyTime(DateTimeFields &tm)
     {
+        if (!lfs) return false;
         uint32_t mdt = getModifiedTime();
         if (mdt == 0) {return false;} // did not retrieve a date;
         breakTime(mdt, tm);
@@ -98,6 +114,7 @@ public:
     }
     virtual bool setCreateTime(const DateTimeFields &tm)
     {
+        if (!lfs || !name()) return false;
         if (tm.year < 80 || tm.year > 207) return false;
         bool success = true;
         uint32_t mdt = makeTime(tm);
@@ -108,6 +125,7 @@ public:
     }
     virtual bool setModifyTime(const DateTimeFields &tm)
     {
+        if (!lfs || !name()) return false;
         if (tm.year < 80 || tm.year > 207) return false;
         bool success = true;
         uint32_t mdt = makeTime(tm);
@@ -119,9 +137,10 @@ public:
     virtual size_t write(const void *buf, size_t size)
     {
         //Serial.println("write");
-        if (!file) return 0;
+        if (!file || !buf || size == 0) return 0;
         //Serial.println(" is regular file");
-        return lfs_file_write(lfs, file, buf, size);
+        lfs_ssize_t result = lfs_file_write(lfs, file, buf, size);
+        return (result < 0) ? 0 : result;
     }
     virtual int peek()
     {
@@ -142,12 +161,10 @@ public:
     }
     virtual size_t read(void *buf, size_t nbyte)
     {
-        if (file) {
-            lfs_ssize_t r = lfs_file_read(lfs, file, buf, nbyte);
-            if (r < 0) r = 0;
-            return r;
-        }
-        return 0;
+        if (!file || !buf || nbyte == 0) return 0;
+        lfs_ssize_t r = lfs_file_read(lfs, file, buf, nbyte);
+        if (r < 0) r = 0;
+        return r;
     }
     virtual bool truncate(uint64_t size = 0)
     {
@@ -255,11 +272,11 @@ private:
     lfs_t *lfs;
     lfs_file_t *file;
     lfs_dir_t *dir;
-    char *filename;
     char fullpath[128];
 
     uint32_t getCreationTime()
     {
+        if (!lfs) return 0;
         uint32_t filetime = 0;
         int rc = lfs_getattr(lfs, fullpath, 'c', (void *)&filetime, sizeof(filetime));
         if (rc != sizeof(filetime))
@@ -268,6 +285,7 @@ private:
     }
     uint32_t getModifiedTime()
     {
+        if (!lfs) return 0;
         uint32_t filetime = 0;
         int rc = lfs_getattr(lfs, fullpath, 'm', (void *)&filetime, sizeof(filetime));
         if (rc != sizeof(filetime))
@@ -284,25 +302,21 @@ public:
     {
     }
     virtual ~LittleFS() { }
-    virtual bool format(int type = 0, char progressChar = 0, Print &pr = Serial)
-    {
-        if (type == 0) { return quickFormat(); }
-        if (type == 1) { return lowLevelFormat(progressChar, &pr); }
-        return true;
-    }
 
-    virtual const char *getMediaName() {return (const char *)F("");}
+    virtual bool format() override { return lfsFormat(); }
+    virtual const char *getMediaName() { return (const char *)(""); }
     virtual const char *name() { return getMediaName(); }
     virtual bool mediaPresent() { return mounted; }
 
-    bool quickFormat();
-    bool lowLevelFormat(char progressChar = 0, Print *pr = &Serial);
-    uint32_t formatUnused(uint32_t blockCnt, uint32_t blockStart);
+    bool lfsFormat();
+    
     File open(const char *filepath, uint8_t mode = FILE_READ)
     {
+        if (!filepath || strlen(filepath) == 0) return File();
+        if (!mounted) return File();
+        
         int rcode;
         //Serial.println("LittleFS open");
-        if (!mounted) return File();
         if (mode == FILE_READ) {
             struct lfs_info info;
             if (lfs_stat(&lfs, filepath, &info) < 0) return File();
@@ -343,20 +357,25 @@ public:
                 } // else FILE_WRITE_BEGIN
                 return File(new LittleFSFile(&lfs, file, filepath));
             }
+            free(file);
         }
         return File();
     }
     bool exists(const char *filepath)
     {
+        if (!filepath || strlen(filepath) == 0) return false;
         if (!mounted) return false;
+        
         struct lfs_info info;
         if (lfs_stat(&lfs, filepath, &info) < 0) return false;
         return true;
     }
     bool mkdir(const char *filepath)
     {
-        int rcode;
+        if (!filepath || strlen(filepath) == 0) return false;
         if (!mounted) return false;
+        
+        int rcode;
         if (lfs_mkdir(&lfs, filepath) < 0) return false;
         uint32_t _now = LittleFSClock.get();
         rcode = lfs_setattr(&lfs, filepath, 'c', (const void *) &_now, sizeof(_now));
@@ -369,7 +388,9 @@ public:
     }
     bool rename(const char *oldfilepath, const char *newfilepath)
     {
+        if (!oldfilepath || !newfilepath || strlen(oldfilepath) == 0 || strlen(newfilepath) == 0) return false;
         if (!mounted) return false;
+        
         if (lfs_rename(&lfs, oldfilepath, newfilepath) < 0) return false;
         uint32_t _now = LittleFSClock.get();
         int rcode = lfs_setattr(&lfs, newfilepath, 'm', (const void *) &_now, sizeof(_now));
@@ -379,7 +400,9 @@ public:
     }
     bool remove(const char *filepath)
     {
+        if (!filepath || strlen(filepath) == 0) return false;
         if (!mounted) return false;
+        
         if (lfs_remove(&lfs, filepath) < 0) return false;
         return true;
     }

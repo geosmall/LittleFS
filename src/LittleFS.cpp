@@ -61,11 +61,12 @@ static const struct chipinfo {
     {{0xC8, 0x40, 0x17}, 24, 256, 65536, 0xD8, 8388608, 4000, 3000000, "GD25Q64E"},  // GigaDevice GD25Q64E
     {{0xC8, 0x40, 0x18}, 24, 256, 65536, 0xD8, 16777216, 4000, 3000000, "GD25Q128E"},  // GigaDevice GD25Q128E
     {{0xC8, 0x40, 0x19}, 32, 256, 65536, 0xDC, 33554432, 2000, 1600000, "GD25Q256E"},  // GigaDevice GD25Q256E
-
 };
 
 static const struct chipinfo *chip_lookup(const uint8_t *id)
 {
+    if (!id) return nullptr;
+    
     const unsigned int numchips = sizeof(known_chips) / sizeof(struct chipinfo);
     for (unsigned int i = 0; i < numchips; i++) {
         const uint8_t *chip = known_chips[i].id;
@@ -169,7 +170,7 @@ bool LittleFS_SPIFlash::getChipInfo(LFS_W25QXX_info_t &info)
     return true;
 }
 
-bool LittleFS::quickFormat()
+bool LittleFS::lfsFormat()
 {
     if (!configured) return false;
     if (mounted) {
@@ -212,89 +213,6 @@ static bool blockIsBlank(struct lfs_config *config, lfs_block_t block, void *rea
     return true; // all bytes read as 0xFF
 }
 
-static int cb_usedBlocks(void *inData, lfs_block_t block)
-{
-    static lfs_block_t maxBlock;
-    static uint32_t totBlock;
-    if (nullptr == inData) {   // not null during traverse
-        uint32_t totRet = totBlock;
-        if (0 != block) {
-            maxBlock = block;
-            totBlock = 0;
-        }
-        return totRet; // exit after init, end, or bad call
-    }
-    totBlock++;
-    if (block > maxBlock) return block;   // this is beyond media blocks
-    uint32_t iiblk = block / 8;
-    uint8_t jjbit = 1 << (block % 8);
-    uint8_t *myData = (uint8_t *)inData;
-    myData[iiblk] = myData[iiblk] | jjbit;
-    return 0;
-}
-
-uint32_t LittleFS::formatUnused(uint32_t blockCnt, uint32_t blockStart)
-{
-    if (!configured) return 0;
-    uint32_t iiblk = 1 + (config.block_count / 8);
-    uint8_t *checkused = (uint8_t *)malloc(iiblk);
-    if (checkused == nullptr) return 0;
-    void *buffer = malloc(config.read_size);
-    if (buffer == nullptr) {
-        free(checkused);
-        return 0;
-    }
-    memset(checkused, 0, iiblk);
-    cb_usedBlocks(nullptr, config.block_count);   // init and pass MAX block_count
-    int err = lfs_fs_traverse(&lfs, cb_usedBlocks, checkused); // on return 1 bits are used blocks
-
-    if (err < 0) {
-        free(checkused);
-        free(buffer);
-        return 0;
-    }
-    uint32_t block = blockStart, jj = 0;
-    if (block >= config.block_count) blockStart = 0;
-    if (0 == blockCnt) blockCnt = config.block_count;
-    while (block < config.block_count && jj < blockCnt) {
-        iiblk = block / 8;
-        uint8_t jjbit = 1 << (block % 8);
-        if (!(checkused[iiblk] & jjbit)) {   // block not in use
-            if (!blockIsBlank(&config, block, buffer, false)) {
-                (*config.erase)(&config, block);
-                jj++;
-            }
-        }
-        block++;
-    }
-    free(checkused); // This discards LFS_(check)used list. If each Format by LFS were known we could add to a static copy.
-    // Traverse takes 2 to 20ms on each entry - some images and media may take longer
-    // TODO?: if kept and updated the 'free dirty blocks' could be ignored and traverse skipped until all prior dirty were formatted
-    free(buffer);
-    if (block >= config.block_count) block = 0;
-    return block; // return lastChecked block to store to start next pass as blockStart
-}
-
-bool LittleFS::lowLevelFormat(char progressChar, Print *pr)
-{
-    if (!configured) return false;
-    if (mounted) {
-        lfs_unmount(&lfs);
-        mounted = false;
-    }
-    int ii = config.block_count / 120;
-    void *buffer = malloc(config.read_size);
-    for (unsigned int block = 0; block < config.block_count; block++) {
-        if (pr && progressChar && (0 == block % ii)) pr->write(progressChar);
-        if (!blockIsBlank(&config, block, buffer)) {
-            (*config.erase)(&config, block);
-        }
-    }
-    free(buffer);
-    if (pr && progressChar) pr->println();
-    return quickFormat();
-}
-
 static void make_command_and_address(uint8_t *buf, uint8_t cmd, uint32_t addr, uint8_t addrbits)
 {
     buf[0] = cmd;
@@ -320,7 +238,7 @@ static void printtbuf(const void *buf, unsigned int len)
 
 int LittleFS_SPIFlash::read(lfs_block_t block, lfs_off_t offset, void *buf, lfs_size_t size)
 {
-    if (!port) return LFS_ERR_IO;
+    if (!port || !buf) return LFS_ERR_IO;
     const uint32_t addr = block * config.block_size + offset;
     const uint8_t addrbits = ((const struct chipinfo *)hwinfo)->addrbits;
     const uint8_t cmd = (addrbits == 24) ? 0x03 : 0x13; // standard read command
@@ -341,7 +259,7 @@ int LittleFS_SPIFlash::read(lfs_block_t block, lfs_off_t offset, void *buf, lfs_
 
 int LittleFS_SPIFlash::prog(lfs_block_t block, lfs_off_t offset, const void *buf, lfs_size_t size)
 {
-    if (!port) return LFS_ERR_IO;
+    if (!port || !buf) return LFS_ERR_IO;
     const uint32_t addr = block * config.block_size + offset;
     const uint8_t addrbits = ((const struct chipinfo *)hwinfo)->addrbits;
     const uint8_t cmd = (addrbits == 24) ? 0x02 : 0x12; // page program
