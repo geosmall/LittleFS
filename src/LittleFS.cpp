@@ -38,29 +38,29 @@ static const struct chipinfo {
     uint32_t erasetime; // maximum microseconds to wait for sector erase
     const char pn[22];      //flash name
 } known_chips[] = {
-    {{0xEF, 0x40, 0x15}, 24, 256, 32768, 0x52, 2097152, 3000, 1600000, "W25Q16JV-Q"},  // Winbond W25Q16JV*Q/W25Q16FV
-    {{0xEF, 0x40, 0x16}, 24, 256, 32768, 0x52, 4194304, 3000, 1600000, "W25Q32JV-Q"},  // Winbond W25Q32JV*Q/W25Q32FV
-    {{0xEF, 0x40, 0x17}, 24, 256, 65536, 0xD8, 8388608, 3000, 2000000, "W25Q64JV-Q"},  // Winbond W25Q64JV*Q/W25Q64FV
-    {{0xEF, 0x40, 0x18}, 24, 256, 65536, 0xD8, 16777216, 3000, 2000000, "W25Q128JV-Q"}, // Winbond W25Q128JV*Q/W25Q128FV
-    {{0xEF, 0x40, 0x19}, 32, 256, 65536, 0xDC, 33554432, 3000, 2000000, "W25Q256JV-Q"}, // Winbond W25Q256JV*Q
-    {{0xEF, 0x40, 0x20}, 32, 256, 65536, 0xDC, 67108864, 3500, 2000000, "W25Q512JV-Q"}, // Winbond W25Q512JV*Q
-    {{0xEF, 0x40, 0x21}, 32, 256, 65536, 0xDC, 134217728, 3500, 2000000, "W25Q01JV-Q"},// Winbond W25Q01JV*Q
-    {{0x62, 0x06, 0x13}, 24, 256,  4096, 0x20, 524288, 5000, 300000, "SST25PF040C"},  // Microchip SST25PF040C
-//{{0xEF, 0x40, 0x14}, 24, 256,  4096, 0x20, 1048576, 5000, 300000, "W25Q80DV"},  // Winbond W25Q80DV  not tested
-    {{0xEF, 0x70, 0x17}, 24, 256, 65536, 0xD8, 8388608, 3000, 2000000, "W25Q64JV-M"},  // Winbond W25Q64JV*M (DTR)
-    {{0xEF, 0x70, 0x18}, 24, 256, 65536, 0xD8, 16777216, 3000, 2000000, "W25Q128JV-M"}, // Winbond W25Q128JV*M (DTR)
-    {{0xEF, 0x70, 0x19}, 32, 256, 65536, 0xDC, 33554432, 3000, 2000000, "W25Q256JV-M"}, // Winbond W25Q256JV*M (DTR)
-    {{0xEF, 0x80, 0x19}, 32, 256, 65536, 0xDC, 33554432, 3000, 2000000, "W25Q256JW-M"}, // Winbond (W25Q256JW*M)
-    {{0xEF, 0x70, 0x20}, 32, 256, 65536, 0xDC, 67108864, 3500, 2000000, "W25Q512JV-M"}, // Winbond W25Q512JV*M (DTR)
-    {{0x1F, 0x84, 0x01}, 24, 256,  4096, 0x20, 524288, 2500, 300000, "AT25SF041"},    // Adesto/Atmel AT25SF041
-    {{0x01, 0x40, 0x14}, 24, 256,  4096, 0x20, 1048576, 5000, 300000, "S25FL208K"},   // Spansion S25FL208K
-    {{0xC8, 0x40, 0x13}, 24, 256,  4096, 0x20,  524288, 2400, 300000, "GD25Q40C"},   // GigaDevice GD25Q40C
-    {{0xC8, 0x40, 0x14}, 24, 256,  4096, 0x20, 1048576, 2400, 300000, "GD25Q80C"},   // GigaDevice GD25Q80C
-    {{0xC8, 0x40, 0x15}, 24, 256, 32768, 0x52, 2097152, 4000, 1600000, "GD25Q16E"},  // GigaDevice GD25Q16E
-    {{0xC8, 0x40, 0x16}, 24, 256, 32768, 0x52, 4194304, 4000, 1600000, "GD25Q32E"},  // GigaDevice GD25Q32E
-    {{0xC8, 0x40, 0x17}, 24, 256, 65536, 0xD8, 8388608, 4000, 3000000, "GD25Q64E"},  // GigaDevice GD25Q64E
-    {{0xC8, 0x40, 0x18}, 24, 256, 65536, 0xD8, 16777216, 4000, 3000000, "GD25Q128E"},  // GigaDevice GD25Q128E
-    {{0xC8, 0x40, 0x19}, 32, 256, 65536, 0xDC, 33554432, 2000, 1600000, "GD25Q256E"},  // GigaDevice GD25Q256E
+    {{0xEF, 0x40, 0x15}, 24, PROGSZ, 32768, 0x52, 2097152, 3000, 1600000, "W25Q16JV-Q"},  // Winbond W25Q16JV*Q/W25Q16FV
+    {{0xEF, 0x40, 0x16}, 24, PROGSZ, 32768, 0x52, 4194304, 3000, 1600000, "W25Q32JV-Q"},  // Winbond W25Q32JV*Q/W25Q32FV
+    {{0xEF, 0x40, 0x17}, 24, PROGSZ, 65536, 0xD8, 8388608, 3000, 2000000, "W25Q64JV-Q"},  // Winbond W25Q64JV*Q/W25Q64FV
+    {{0xEF, 0x40, 0x18}, 24, PROGSZ, 65536, 0xD8, 16777216, 3000, 2000000, "W25Q128JV-Q"}, // Winbond W25Q128JV*Q/W25Q128FV
+    {{0xEF, 0x40, 0x19}, 32, PROGSZ, 65536, 0xDC, 33554432, 3000, 2000000, "W25Q256JV-Q"}, // Winbond W25Q256JV*Q
+    {{0xEF, 0x40, 0x20}, 32, PROGSZ, 65536, 0xDC, 67108864, 3500, 2000000, "W25Q512JV-Q"}, // Winbond W25Q512JV*Q
+    {{0xEF, 0x40, 0x21}, 32, PROGSZ, 65536, 0xDC, 134217728, 3500, 2000000, "W25Q01JV-Q"},// Winbond W25Q01JV*Q
+    {{0x62, 0x06, 0x13}, 24, PROGSZ,  4096, 0x20, 524288, 5000, 300000, "SST25PF040C"},  // Microchip SST25PF040C
+//{{0xEF, 0x40, 0x14}, 24, PROGSZ,  4096, 0x20, 1048576, 5000, 300000, "W25Q80DV"},  // Winbond W25Q80DV  not tested
+    {{0xEF, 0x70, 0x17}, 24, PROGSZ, 65536, 0xD8, 8388608, 3000, 2000000, "W25Q64JV-M"},  // Winbond W25Q64JV*M (DTR)
+    {{0xEF, 0x70, 0x18}, 24, PROGSZ, 65536, 0xD8, 16777216, 3000, 2000000, "W25Q128JV-M"}, // Winbond W25Q128JV*M (DTR)
+    {{0xEF, 0x70, 0x19}, 32, PROGSZ, 65536, 0xDC, 33554432, 3000, 2000000, "W25Q256JV-M"}, // Winbond W25Q256JV*M (DTR)
+    {{0xEF, 0x80, 0x19}, 32, PROGSZ, 65536, 0xDC, 33554432, 3000, 2000000, "W25Q256JW-M"}, // Winbond (W25Q256JW*M)
+    {{0xEF, 0x70, 0x20}, 32, PROGSZ, 65536, 0xDC, 67108864, 3500, 2000000, "W25Q512JV-M"}, // Winbond W25Q512JV*M (DTR)
+    {{0x1F, 0x84, 0x01}, 24, PROGSZ,  4096, 0x20, 524288, 2500, 300000, "AT25SF041"},    // Adesto/Atmel AT25SF041
+    {{0x01, 0x40, 0x14}, 24, PROGSZ,  4096, 0x20, 1048576, 5000, 300000, "S25FL208K"},   // Spansion S25FL208K
+    {{0xC8, 0x40, 0x13}, 24, PROGSZ,  4096, 0x20,  524288, 2400, 300000, "GD25Q40C"},   // GigaDevice GD25Q40C
+    {{0xC8, 0x40, 0x14}, 24, PROGSZ,  4096, 0x20, 1048576, 2400, 300000, "GD25Q80C"},   // GigaDevice GD25Q80C
+    {{0xC8, 0x40, 0x15}, 24, PROGSZ, 32768, 0x52, 2097152, 4000, 1600000, "GD25Q16E"},  // GigaDevice GD25Q16E
+    {{0xC8, 0x40, 0x16}, 24, PROGSZ, 32768, 0x52, 4194304, 4000, 1600000, "GD25Q32E"},  // GigaDevice GD25Q32E
+    {{0xC8, 0x40, 0x17}, 24, PROGSZ, 65536, 0xD8, 8388608, 4000, 3000000, "GD25Q64E"},  // GigaDevice GD25Q64E
+    {{0xC8, 0x40, 0x18}, 24, PROGSZ, 65536, 0xD8, 16777216, 4000, 3000000, "GD25Q128E"},  // GigaDevice GD25Q128E
+    {{0xC8, 0x40, 0x19}, 32, PROGSZ, 65536, 0xDC, 33554432, 2000, 1600000, "GD25Q256E"},  // GigaDevice GD25Q256E
 };
 
 static const struct chipinfo *chip_lookup(const uint8_t *id)
@@ -310,6 +310,29 @@ int LittleFS_SPIFlash::erase(lfs_block_t block)
     digitalWrite(pin, HIGH);
     port->endTransaction();
     const uint32_t erasetime = ((const struct chipinfo *)hwinfo)->erasetime;
+    return wait(erasetime);
+}
+
+int LittleFS_SPIFlash::eraseChip()
+{
+    if (!port || !hwinfo) return LFS_ERR_IO;
+    
+    // Chip erase command is 0xC7 for W25Qxx chips
+    const uint8_t chip_erase_cmd = 0xC7;
+    
+    port->beginTransaction(SPICONFIG);
+    digitalWrite(pin, LOW);
+    port->transfer(0x06); // 0x06 = write enable
+    digitalWrite(pin, HIGH);
+    delayMicroseconds(1);
+    
+    digitalWrite(pin, LOW);
+    port->transfer(chip_erase_cmd); // 0xC7 = chip erase
+    digitalWrite(pin, HIGH);
+    port->endTransaction();
+    
+    // Wait for chip erase to complete - can take up to 1000 seconds for large chips
+    const uint32_t erasetime = 1000 * 1000 * 1000;
     return wait(erasetime);
 }
 

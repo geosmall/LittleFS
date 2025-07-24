@@ -1,69 +1,67 @@
-/*
-  LittleFS usage from the LittleFS library
-  
-  Starting with Teensyduino 1.54, support for LittleFS has been added.
-
-  LittleFS is a wrapper for the LittleFS File System for the Teensy family of microprocessors and provides support for RAM Disks, NOR and NAND Flash chips, and FRAM chips. For the NOR, NAND Flash support is provided for SPI and QSPI in the case of the Teensy 4.1. For FRAM only SPI is supported. It is also linked to SDFat so many of the same commands can be used as for an SD Card.
-  
-  This example shows the use of some of the commands provided in LittleFS using a SPI Flash chip such as the W25Q128. 
-  
-  See the readme for the LittleFS library for more information: https://github.com/PaulStoffregen/LittleFS
-  
-*/
-
+#include <SPI.h>
 #include <LittleFS.h>
 
+void Local_Error_Handler()
+{
+    asm("BKPT #0\n"); // break into the debugger
+}
+
+#if defined(ARDUINO_BLACKPILL_F411CE)
+//              MOSI  MISO  SCLK
+SPIClass SPIbus(PA7,  PA6,  PA5);
+#define CS_PIN PA4
+#else
+//              MOSI  MISO  SCLK
+SPIClass SPIbus(PC12, PC11, PC10);
+#define CS_PIN PD2
+#endif
 
 // Some variables for later use
 uint64_t fTot, totSize1;
 
 // To use SPI flash we need to create a instance of the library telling it to use SPI flash.
-/* Other options include:
-  LittleFS_QSPIFlash myfs;
-  LittleFS_Program myfs;
-  LittleFS_SPIFlash myfs;
-  LittleFS_SPIFram myfs;
-  LittleFS_SPINAND myfs;
-  LittleFS_QPINAND myfs;
-  LittleFS_RAM myfs;
-*/
 LittleFS_SPIFlash myfs;
-
-// Since we are using SPI we need to tell the library what the chip select pin
-#define chipSelect 6  // use for access flash on audio or prop shield
 
 // Specifies that the file, file1 and file3 are File types, same as you would do for creating files
 // on a SD Card
 File file, file1, file2;
 
-
 void setup()
 {
-  // Open serial communications and wait for port to open:
   Serial.begin(115200);
-  while (!Serial) {
-    // wait for serial port to connect.
-  }
+  while (!Serial) delay(100); // wait until Serial/monitor is opened
+
   Serial.println("\n" __FILE__ " " __DATE__ " " __TIME__);
+
+  // ensure the CS pin is pulled HIGH
+  pinMode(CS_PIN, OUTPUT); digitalWrite(CS_PIN, HIGH);
+
+  delay(10); // Wait a bit to make sure w25qxx chip is ready
 
   Serial.print("Initializing LittleFS ...");
 
   // see if the Flash is present and can be initialized:
   // Note:  SPI is default so if you are using SPI and not SPI for instance
   //        you can just specify myfs.begin(chipSelect). 
-  if (!myfs.begin(chipSelect, SPI)) {
+  if (!myfs.begin(CS_PIN, SPIbus)) {
     Serial.printf("Error starting %s\n", "SPI FLASH");
     while (1) {
       // Error, so don't do anything more - stay stuck here
     }
   }
-  myfs.quickFormat();
+  myfs.format();
   Serial.println("LittleFS initialized.");
   
   
   // To get the current space used and Filesystem size
   Serial.println("\n---------------");
-  Serial.printf("Bytes Used: %llu, Bytes Total:%llu\n", myfs.usedSize(), myfs.totalSize());
+  uint64_t usedSize = myfs.usedSize();
+  uint64_t totalSize = myfs.totalSize();
+  Serial.print("Bytes Used: ");
+  printU64(usedSize);
+  Serial.print(", Bytes Total: ");
+  printU64(totalSize);
+  Serial.println();
   waitforInput();
 
   // Now lets create a file and write some data.  Note: basically the same usage for 
@@ -185,7 +183,11 @@ void listFiles()
 {
   Serial.println("---------------");
   printDirectory(myfs);
-  Serial.printf("Bytes Used: %llu, Bytes Total:%llu\n", myfs.usedSize(), myfs.totalSize());
+  Serial.print("Bytes Used: ");
+  printU64(myfs.usedSize());
+  Serial.print(", Bytes Total: ");
+  printU64(myfs.totalSize());
+  Serial.println();
 }
 
 void printDirectory(FS &fs) {

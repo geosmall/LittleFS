@@ -5,7 +5,7 @@
 // w25qxx_type_t chip_type = W25Q128;
 
 /** Uncomment to  erase W25QXX chip */
-// #define ERASE_CHIP
+#define ERASE_CHIP
 
 #define DBG(...)    Serial.printf(__VA_ARGS__)
 #define BLINK_FAST 50
@@ -85,8 +85,8 @@ void setup()
 
 #if defined (ERASE_CHIP)
     Serial.println("Erasing...");
-    res = W25QXX_chip_erase(&myfs.W25QXX_hdl);
-    if (res != W25QXX_Ok) {
+    int ret = myfs.eraseChip();
+    if (ret != LFS_ERR_OK) {
         Local_Error_Handler();
     }
     Serial.println("Done erasing chip");
@@ -99,6 +99,7 @@ void setup()
     // FS_RunBenchmark();
 
     // W25QXX_deinit(&W25QXX_hdl);
+
 }
 
 // the loop routine runs over and over again forever:

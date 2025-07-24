@@ -26,6 +26,18 @@
 #include <FS.h>
 #include "littlefs/lfs.h"
 
+#define PROGSZ 256  // True for all w25qxx chips
+#define LITTLEFS_CACHE_SIZE PROGSZ  // Should match lfs->cfg->cache_size
+
+// Configuration - can be overridden at compile time
+#ifndef LITTLEFS_MAX_OPEN_FILES
+#define LITTLEFS_MAX_OPEN_FILES 2
+#endif
+
+#ifndef LITTLEFS_MAX_OPEN_DIRS
+#define LITTLEFS_MAX_OPEN_DIRS 1
+#endif
+
 // ------------------------------------------------------------------------------------------------------
 
 // Structure definition for device info
@@ -438,6 +450,7 @@ public:
     const char *getMediaName();
     const char *name() { return getMediaName(); }
     bool getChipInfo(LFS_W25QXX_info_t &info);
+    int eraseChip();
 private:
     int read(lfs_block_t block, lfs_off_t offset, void *buf, lfs_size_t size);
     int prog(lfs_block_t block, lfs_off_t offset, const void *buf, lfs_size_t size);
