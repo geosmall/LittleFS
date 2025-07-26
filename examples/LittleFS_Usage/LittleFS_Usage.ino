@@ -31,8 +31,6 @@ void setup()
   Serial.begin(115200);
   while (!Serial) delay(100); // wait until Serial/monitor is opened
 
-  Serial.println("\n" __FILE__ " " __DATE__ " " __TIME__);
-
   // ensure the CS pin is pulled HIGH
   pinMode(CS_PIN, OUTPUT); digitalWrite(CS_PIN, HIGH);
 
@@ -49,6 +47,8 @@ void setup()
       // Error, so don't do anything more - stay stuck here
     }
   }
+  Serial.println(myfs.getMediaName());
+
   myfs.format();
   Serial.println("LittleFS initialized.");
   

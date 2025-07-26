@@ -14,20 +14,36 @@
 */
 
 #include <LittleFS.h>
-#include <Entropy.h>
+
+void Local_Error_Handler()
+{
+    asm("BKPT #0\n"); // break into the debugger
+}
+
+#if defined(ARDUINO_BLACKPILL_F411CE)
+//              MOSI  MISO  SCLK
+SPIClass SPIbus(PA7,  PA6,  PA5);
+#define CS_PIN PA4
+#else
+//              MOSI  MISO  SCLK
+SPIClass SPIbus(PC12, PC11, PC10);
+#define CS_PIN PD2
+#endif
 
 LittleFS_SPIFlash myfs;
 
-#define chipSelect 6  // use pin 6 for access flash on audio or prop shield
-
 void setup() {
-  Entropy.Initialize();
-  Serial.begin(9600);
-  while (!Serial) ; // wait for Arduino Serial Monitor
-  Serial.println("LittleFS Sustained Write Speed Test");
-  if (!myfs.begin(chipSelect, SPI)) {
-    Serial.printf("Error starting %s\n", "SPI FLASH");
-    while (1) ; // stop here
+  bool res;
+  Serial.begin(115200);
+  while (!Serial) delay(100); // wait until Serial/monitor is opened
+  Serial.println("SPI Flash speed test...");
+  // ensure the CS pin is pulled HIGH
+  pinMode(CS_PIN, OUTPUT); digitalWrite(CS_PIN, HIGH);
+  delay(10); // Wait a bit to make sure w25qxx chip is ready
+  res = myfs.begin(CS_PIN, SPIbus);
+  if (!res) {
+    Serial.println("initialization failed!");
+    Local_Error_Handler();
   }
   Serial.printf("Volume size %d MByte\n", myfs.totalSize() / 1048576);
 }
@@ -40,14 +56,15 @@ void loop() {
   if (myfile) {
     const int num_write = 128;
     Serial.printf("Writing %d byte file... ", num_write * 4096);
-    randomSeed(Entropy.random());
-    elapsedMillis t=0;
+    uint32_t val = analogRead(0);
+    randomSeed(val);
+    uint32_t start = getCurrentMillis();
     for (int n=0; n < num_write; n++) {
       for (int i=0; i<1024; i++) buf[i] = random();
       myfile.write(buf, 4096);
     }
     myfile.close();
-    int ms = t;
+    uint32_t ms = getCurrentMillis() - start;
     total_bytes_written = total_bytes_written + num_write * 4096;
     Serial.printf(" %d ms, bandwidth = %d bytes/sec", ms, num_write * 4096 * 1000 / ms);
     myfs.remove("WriteSpeedTest.bin");

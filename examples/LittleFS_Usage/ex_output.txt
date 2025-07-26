@@ -1,0 +1,89 @@
+Example output with freshly erased chip:
+
+
+Initializing LittleFS ...Flash ID: EF 40 18  40
+Flash size is 16.00 Mbyte
+attempting to mount existing media
+D:\Arduino\libraries\LittleFS\src\littlefs\lfs.c:1369:error: Corrupted dir pair at {0x0, 0x1}
+couldn't mount media, attemping to format
+attempting to mount freshly formatted media
+success
+W25Q128JV-Q
+LittleFS initialized.
+
+---------------
+Bytes Used: 8192, Bytes Total: 16777216
+Press anykey to continue
+
+---------------
+Now lets create a file with some data in it
+---------------
+File Size of bigfile.txt (bytes): 12928
+---------------
+Directory
+---------
+bigfile.txt                           12928
+
+Bytes Used: 24576, Bytes Total: 16777216
+Press anykey to continue
+
+---------------
+Rename bigfile to file10
+---------------
+Directory
+---------
+file10.txt                            12928
+
+Bytes Used: 24576, Bytes Total: 16777216
+Press anykey to continue
+
+---------------
+Delete file10.txt
+---------------
+Directory
+---------
+
+Bytes Used: 8192, Bytes Total: 16777216
+Press anykey to continue
+
+---------------
+Create a directory and a subfile
+---------------
+Directory
+---------
+structureData1/
+  temp_test.txt                       19
+
+Bytes Used: 16384, Bytes Total: 16777216
+Press anykey to continue
+
+---------------
+Rename directory
+---------------
+Directory
+---------
+structuredData/
+  temp_test.txt                       19
+
+Bytes Used: 16384, Bytes Total: 16777216
+Press anykey to continue
+
+---------------
+Lets remove them now...
+---------------
+Directory
+---------
+
+Bytes Used: 8192, Bytes Total: 16777216
+Press anykey to continue
+
+---------------
+Now lets create a file and read the data back...
+
+Writing to datalog.bin using LittleFS functions
+datalog.bin started with 0 bytes
+
+Reading to datalog.bin using LittleFS functions
+  Read from file: Just some test data written to the file (by SdFat functions)
+
+Basic Usage Example Finished
